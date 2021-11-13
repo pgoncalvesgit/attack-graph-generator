@@ -1,0 +1,17 @@
+server:
+  port: 8888
+
+info:
+  name: "Config Service"
+
+spring:
+  application:
+    name: config-service
+#  profiles:
+#    active: native  # For local file repository only
+  cloud:
+    config:
+      enabled: true
+      server:
+        git:
+          uri: https://github.com/Oreste-Luci/netflix-oss-example-config-repo

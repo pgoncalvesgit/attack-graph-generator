@@ -1,0 +1,127 @@
+###############################################################
+### Default configuration for development environment.      ###
+### In test/production this file will be used but will be   ###
+### extended with tes.yml or production.yml                 ###
+###############################################################
+version: "3.1"
+services:
+  eureka:
+    build: 
+      context: ./eureka-server
+    networks:
+      - zuul-eureka
+      - eureka-serviceabc
+      - eureka-spring-cloud-dashboard
+
+  hystrixdashboard:
+    build:
+      context: ./hystrix-dashboard
+    networks:
+      - turbine-hystrix
+
+  configservice:
+    build:
+      context: ./config-service
+    networks:
+      - config-serviceabc
+
+#springbootadmin:
+#    build: ../spring-boot-admin
+#    ports:
+#     - "8085:8085"
+
+  springclouddashboard:
+    build:
+      context: ./spring-cloud-dashboard
+    environment:
+     - spring.profiles.active=docker
+    networks:
+      - serviceabc-spring-cloud-dashboard
+      - eureka-spring-cloud-dashboard
+      - turbine-spring-cloud-dashboard
+
+  turbine:
+    build:
+      context: ./turbine
+    environment:
+     - spring.profiles.active=docker
+    networks:
+      - rabbitmq-turbine
+      - turbine-hystrix
+      - turbine-spring-cloud-dashboard
+
+  zuul:
+    build:
+      context: ./zuul
+    ports:
+     - "8765:8765"
+    networks:
+      - zuul-eureka
+
+  rabbitmq:
+#    image: rabbitmq:3.5.3-management
+    build:
+      context: ./rabbitmq
+    networks:
+      - rabbitmq-serviceabc
+      - rabbitmq-turbine
+
+  servicea:
+    build:
+      context: ./service_a
+    environment:
+     - spring.profiles.active=docker
+    networks:
+      - serviceabc-internal
+      - eureka-serviceabc
+      - config-serviceabc
+      - serviceabc-spring-cloud-dashboard
+      - rabbitmq-serviceabc
+
+  serviceb:
+    build:
+      context: ./service_b
+    environment:
+     - spring.profiles.active=docker
+    networks:
+      - serviceabc-internal
+      - eureka-serviceabc
+      - config-serviceabc
+      - serviceabc-spring-cloud-dashboard
+      - rabbitmq-serviceabc
+
+  servicec:
+    build:
+      context: ./service_c
+    environment:
+      - spring.profiles.active=docker
+    networks:
+      - serviceabc-internal
+      - eureka-serviceabc
+      - config-serviceabc
+      - serviceabc-spring-cloud-dashboard
+      - rabbitmq-serviceabc
+
+networks:
+  zuul-eureka:
+    driver: bridge
+  eureka-spring-cloud-dashboard:
+    driver: bridge
+  serviceabc-spring-cloud-dashboard:
+    driver: bridge
+  turbine-spring-cloud-dashboard:
+    driver: bridge
+  config-serviceabc:
+    driver: bridge
+  eureka-serviceabc:
+    driver: bridge
+  rabbitmq-serviceabc:
+    driver: bridge
+  rabbitmq-turbine:
+    driver: bridge
+  turbine-hystrix:
+    driver: bridge
+  serviceabc-internal:
+    driver: bridge
+
+

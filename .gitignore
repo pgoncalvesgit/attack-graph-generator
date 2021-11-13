@@ -1,10 +1,6 @@
-
-paper_own_docker/main.aux
-paper_own_docker/main.log
-paper_own_docker/main.pdf
-paper_own_docker/main.synctex.gz
-*.log
-*.aux
-paper_own_docker/main.pdf
-*.gz
-
+examples/atsea
+examples/javaee
+examples/example
+examples-results/*
+components/__pycache__
+components/__pycache__/*

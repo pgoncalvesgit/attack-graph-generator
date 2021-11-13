@@ -1,0 +1,12 @@
+server:
+  port: 8085
+
+info:
+  name: "Spring-Boot-Admin"
+
+#
+# Use valid URI characters (eg: do not use _ in names)
+#
+spring:
+  application:
+    name: Spring-Boot-Admin

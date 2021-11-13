@@ -1,0 +1,9 @@
+# The app is taken from https://github.com/Oreste-Luci/netflix-oss-example
+
+# The following modifications were done in order to be able to use the system into the attack graph generator.
+
+1. In the Dockerfiles the ADD command is changed.
+2. The rabbitmq is now locally build. It is the same one. The Dockerfile is taken from https://github.com/docker-library/rabbitmq/tree/5bdfc8547e813bbe2e0ef725738252792780d744
+3. The docker-compose file is put in the root of the project.
+4. Legacy flag links has been deleted. New one "networks has been added" and extended to correspond the image.
+5. Additional ports have been deleted in order to correspond to the image.
