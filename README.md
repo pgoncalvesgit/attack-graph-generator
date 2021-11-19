@@ -1,5 +1,14 @@
+# Attack Graph Generator for Microsservice Architectures
+
+This attack graph generator is an upgrade to an old generator made by Tum Informatik Chair 4, updated in order to use Clair4.
+
+Given the rise of Microsservices, due to their various benefits, such as elasticity and managenability, it is important to keep security up to date on the various deployments.
+One way to do it is by analysing possible attack paths that adversaries can take.
+This can be done looking at attack graphs and protecting the various services based on these.
+The portability aquired by docker images, allows the developers to compress the whole service into a single image, which then enables us to verify what vulnerabilities exist inside a certain service.
+
 # Academic Citation 
-Please cite the following paper when using this tool. 
+You can cite the following paper with the original work:
 
 Ibrahim, Amjad, Stevica Bozhinoski, and Alexander Pretschner. "Attack graph generation for microservice architecture." Proceedings of the 34th ACM/SIGAPP Symposium on Applied Computing. ACM, 2019.
 
@@ -11,15 +20,6 @@ Ibrahim, Amjad, Stevica Bozhinoski, and Alexander Pretschner. "Attack graph gene
   year={2019},
   organization={ACM}
 }
-
-# Attack Graph Generation for Microservice Architecture
-
-Microservices are increasingly dominating the field of service systems, among their many characteristics are technology heterogeneity, communicating small services, and automated deployment.
-Therefore, with the increase of utilizing third-party components
-distributed as images, the potential vulnerabilities existing in a
-microservice-based system increase.
-
-One of the most famous microservice architectures is Docker. This project generates attack graphs for Docker projects.
 
 ## Getting Started
 
@@ -71,6 +71,9 @@ The config file is the main point where the attack graphs can be customized. The
 
 ## Authors
 
+* Paulo Gonçalves pgoncalves@student.dei.uc.pt
+
+Original Authors:
 * Stevica Bozhinoski stevica.bozhinoski@tum.de
 * Amjad Ibrahim, M.Sc. amjad.ibrahim@tum.de
 
