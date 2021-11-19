@@ -77,7 +77,7 @@ fi
 
 
 # Checking if clairctl is installed.
-CLAIR_CTL_PATH="/usr/local/go/bin/src/github.com/jgsqware/clairctl"
+CLAIR_CTL_PATH="/usr/local/go/src/github.com/jgsqware/clairctl"
 if [ -d "$CLAIR_CTL_PATH" ]; then
   # Control will enter here if $DIRECTORY exists.
    echo "Clairctl exists."

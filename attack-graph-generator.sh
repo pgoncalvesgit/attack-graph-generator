@@ -33,8 +33,18 @@ while getopts ":hof:" option; do
          f=${OPTARG}
          input_directory=$f
          if ! [ -d "$input_directory" ]; then
+             echo "WARNING: Directory doesn't exist!"
              echo "-f usage: \"Specify the directory with the files\""
-             exit
+             echo
+             echo "Unless it is an example and will be created during the execution of the program, I recommend you to stop the program!"
+             while true; do
+                 read -p "Do you still want to continue?(Y/y) for yes, and (N/n) for no." yn
+                 case $yn in
+                     [Yy]* ) break;;
+                     [Nn]* ) exit;;
+                     * ) echo "Please answer yes or no.";;
+                 esac
+             done
          fi
          ;;
    esac
@@ -66,7 +76,13 @@ else
     ./create_examples.sh
 fi
 
-
+if [ -z "$input_directory" ]; then
+    echo "Directory given does not exist"
+    echo "-f usage: \"Specify the directory with the files\""
+    echo
+    Help
+    exit
+fi
 
 
 

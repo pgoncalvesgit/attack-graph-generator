@@ -8,12 +8,64 @@ import networkx as nx
 from components import reader
 from components import topology_parser as top_par
 
+
 def clean_vulnerabilities(raw_vulnerabilities, container):
     """Cleans the vulnerabilities for a given container."""
 
     vulnerabilities = {}
 
     # Going to the .json hierarchy to get the CVE ids.
+    vulnerabilities_structure = raw_vulnerabilities["vulnerabilities"]
+    pre_metadata_vulnerabilities_structure = raw_vulnerabilities["enrichments"]
+    metadata_vulnerabilities_structure = list()
+    for metadata in pre_metadata_vulnerabilities_structure.values():
+        metadata_vulnerabilities_structure.extend(metadata)
+
+    for vulnerability in vulnerabilities_structure.values():
+        vulnerability_new = {}
+
+        # Finding the description
+        if "description" in vulnerabilities.keys():
+            vulnerability_new["desc"] = vulnerability["description"]
+        else:
+            vulnerability_new["desc"] = "?"
+
+        # Finding the attack vector
+        vulnerability_new["attack_vec"] = "?"
+        for metadata_dictionary in metadata_vulnerabilities_structure:
+            if not vulnerability["id"] in metadata_dictionary:
+                continue
+            #Probably problem on the implementation of json and will always have size 1
+            metadata_array = metadata_dictionary[vulnerability["id"]]
+            if len(metadata_array) != 1:
+                print("WARNING: METADATA ARRAY OF {} VULNERABILITY ID IS NOT OF LENGTH 1".format(vulnerability["id"]))
+                print(metadata_array)
+                print(len(metadata_array))
+                #continue
+            metadata = metadata_array[0]
+
+
+            #TODO - FIX BAD CODE
+            vec = metadata["vectorString"][9:]
+            vulnerability_new["attack_vec"] = vec
+            break
+
+        vulnerabilities[vulnerability["name"]] = vulnerability_new
+
+    print("Total " + str(len(vulnerabilities))
+          + " vulnerabilities in container "+container+".")
+
+    return vulnerabilities
+
+
+def clean_vulnerabilities_old(raw_vulnerabilities, container):
+    """Cleans the vulnerabilities for a given container."""
+
+    vulnerabilities = {}
+
+    # Going to the .json hierarchy to get the CVE ids.
+    print(raw_vulnerabilities.keys())
+    print(raw_vulnerabilities)
     layers = raw_vulnerabilities["Layers"]
     for layer in layers:
         features = layer["Layer"]["Features"]
@@ -137,11 +189,11 @@ def add_edge(nodes,
     """Adding an edge to the attack graph and checking if nodes already exist."""
 
     
-    """for key in edges.keys():
+    for key in edges.keys():
         if key.endswith(node_start):
             container = node_end.split("(")[0]
             if key.startswith(container):
-                return nodes, edges, passed_edges"""
+                return nodes, edges, passed_edges
 
     # Checks if the opposite edge is already in the collection. If it is, dont add the edge.
     node_start_full = node_start + "(" + node_start_priv + ")"
@@ -207,7 +259,7 @@ def breadth_first_search(topology,
 
         # Iterate through all of the neighbours
         for neighbour in neighbours:
-
+            #neighbour = neighbour.replace("/","_")
             # Checks if the attacker has access to the docker host.
             if current_node == "docker host" and passed_nodes.get(neighbour+"|4") != None:
 
@@ -238,7 +290,8 @@ def breadth_first_search(topology,
                 passed_nodes[neighbour+"|4"] = True
 
             elif neighbour != "outside" and neighbour != "docker host":
-
+                #try:
+                print(container_exploitability.keys())
                 precond = container_exploitability[neighbour]["precond"]
                 postcond = container_exploitability[neighbour]["postcond"]
 
@@ -250,13 +303,13 @@ def breadth_first_search(topology,
 
                         # Add the edge
                         nodes, edges, passed_edges = add_edge(nodes,
-                                                              edges,
-                                                              current_node,
-                                                              get_priv(priv_current),
-                                                              neighbour,
-                                                              get_priv(postcond[vul]),
-                                                              vul,
-                                                              passed_edges)
+                                                          edges,
+                                                          current_node,
+                                                          get_priv(priv_current),
+                                                          neighbour,
+                                                          get_priv(postcond[vul]),
+                                                          vul,
+                                                          passed_edges)
 
                         # If the neighbour was not passed or it has a lower privilege...
                         passed_nodes_key = neighbour + "|" + str(postcond[vul])
@@ -264,6 +317,10 @@ def breadth_first_search(topology,
                             # ... put it in the queue
                             queue.put(passed_nodes_key)
                             passed_nodes[passed_nodes_key] = True
+                #except KeyError as ke:
+                #    print("WARNING: {} not inside the dictonary of neighbors of {}".format(neighbour, current_node))
+                #    print("continuing...")
+                #    continue
 
     duration_bdf = time.time()-bds_start
     print("Breadth-first-search took "+str(duration_bdf)+" seconds.")
@@ -498,7 +555,8 @@ def generate_attack_graph(attack_vector_path,
     """Main pipeline for the attack graph generation algorithm."""
 
     print("Start with attack graph generation...")
-
+    #print("vulnerabilities: {}".format(vulnerabilities))
+    print(vulnerabilities.keys())
     # Read the attack vector files.
     attack_vector_files = reader.read_attack_vector_files(attack_vector_path)
 
@@ -517,14 +575,21 @@ def generate_attack_graph(attack_vector_path,
     # Getting the potentially exploitable vulnerabilities for each container.
     exploitable_vuls = {}
     for container in topology.keys():
+        container = container.replace("/","_")
         if container != "outside" and container != "docker host":
 
             # Reading the vulnerability
+            #try:
             exploitable_vuls[container] = get_exploitable_vuls_container(vulnerabilities[container],
                                                                          container,
                                                                          attack_vector_dict,
                                                                          pre_rules,
                                                                          post_rules)
+            #except KeyError as ke:
+            #    print(ke)
+            #    print("{} not found inside dictionary of vulnerabilities".format(container))
+            #    print("continuing...")
+            #    continue
 
     duration_vuls_preprocessing = time.time() - time_start
     print("Vulnerabilities preprocessing finished. Time elapsed: " + \

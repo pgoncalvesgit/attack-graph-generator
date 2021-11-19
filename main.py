@@ -16,6 +16,7 @@ def visualize_attack_graph(labels_edges,
                            example_folder_path,
                            nodes,
                            edges):
+    print("HERE")
     """This function visualizes the attack graph with given counter examples."""
 
     dot = Digraph(comment="Attack Graph")
@@ -78,14 +79,16 @@ def main(example_folder):
     duration_vulnerabilities = 0
     if config["mode"] == "online":
         time_start = time.time()
-        vul_par.parse_vulnerabilities(example_folder)
+        #vul_par.parse_vulnerabilities(example_folder)
         duration_vulnerabilities = time.time() - time_start
         print("Time elapsed: "+str(duration_vulnerabilities)+" seconds.\n")
 
     vulnerabilities_folder_path = os.path.join(config['examples-results-path'],
                                                os.path.basename(example_folder))
     vulnerabilities = reader.read_vulnerabilities(vulnerabilities_folder_path, topology.keys())
-
+    #print(vulnerabilities.keys())
+    #for key in vulnerabilities.keys():
+    #    print(vulnerabilities[key])
     if not vulnerabilities.keys():
         print("There is a mistake with the vulnerabilities. Terminating the function...")
         return
@@ -134,21 +137,27 @@ def main(example_folder):
                          duration_graph_properties=duration_graph_properties,
                          duration_visualization=duration_visualization)
 
+def input_files_are_correct():
+    # Checks if the command-line input, config file content and docker-compose are valid.
+    if not reader.validate_config_file():
+            print("The config file is not valid.")
+            return False
+
+    if not reader.validate_command_line_input(sys.argv):
+            print("The input file is not valid.")
+            return False
+
+    if not top_par.validation_docker_compose(sys.argv[1]):
+            print("The docker-compose file is not valid.")
+            return False
+    return True
+
+
 if __name__ == "__main__":
 
-    # Checks if the command-line input and config file content is valid.
-    IS_VALID_INPUT = reader.validate_command_line_input(sys.argv)
-    IS_VALID_CONFIG = reader.validate_config_file()
-
-    if not IS_VALID_CONFIG:
-        print("The config file is not valid.")
-        exit()
-
-    if IS_VALID_INPUT:
-
-        # Checks if the docker-compose file is valid.
-        IS_VALID_COMPOSE = top_par.validation_docker_compose(sys.argv[1])
-        if IS_VALID_COMPOSE:
-            main(sys.argv[1])
+    if input_files_are_correct():
+        main(sys.argv[1])
     else:
         print("Please have a look at the --help.")
+        exit()
+

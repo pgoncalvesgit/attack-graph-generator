@@ -30,6 +30,7 @@ def validation_docker_compose(example_folder_path):
         return False
 
     # Checks if the services have the "build" keyword for local building.
+    '''
     for service in services:
         contents_service = services[service]
         if 'build' not in contents_service.keys():
@@ -39,6 +40,7 @@ def validation_docker_compose(example_folder_path):
                   service + \
                   " to the location of the image in the docker-compose.yml file.")
             return False
+    '''
 
     return True
 
@@ -56,13 +58,13 @@ def get_mapping_service_to_image_names(example_folder_path):
 
         # Checks if the 'image' keyword is present and names the service after it.
         if 'image' in content_service.keys():
-            mapping[service] = content_service['image']
+            mapping[service.replace("/","_")] = content_service['image'].replace("/","_")
 
         # If not, it appends the folder name as a prefix to the service name.
         else:
             # Specific to docker: '-' and '_' are removed.
             parent_name = os.path.basename(example_folder_path).replace("-", "").replace("_", "")
-            mapping[service] = os.path.basename(parent_name)+"_"+service
+            mapping[service.replace("/","_")] = os.path.basename(parent_name)+"_"+service.repalce("/","_")
 
     return mapping
 
@@ -123,7 +125,7 @@ def parse_topology(example_folder_path,
 
             # If it does not, it means that it is exposed to every other service.
             first_service_networks = "exposed"
-        list_services[mapping_names[first_service_name]] = []
+        list_services[mapping_names[first_service_name.replace("/","_")]] = []
 
         # Iteration through the second service.
         for second_service_name in services:
@@ -142,8 +144,8 @@ def parse_topology(example_folder_path,
                     if first_service_network in second_service_networks:
 
                         # If they do, then they are added.
-                        list_services[mapping_names[first_service_name]]\
-                        .append(mapping_names[second_service_name])
+                        list_services[mapping_names[first_service_name.replace("/","_")]]\
+                        .append(mapping_names[second_service_name.replace("/","_")])
 
         # Check if the ports are mapped to the host machine
         # i.e. the docker is exposed to outside

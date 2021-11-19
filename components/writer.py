@@ -4,6 +4,7 @@
 import os
 import json
 import yaml
+import shutil
 
 from components import reader
 
@@ -58,11 +59,30 @@ def copy_vulnerability_file(clairctl_home, image_name, old_root_path, parent_fol
 
     config = reader.read_config_file(old_root_path)
     parent_folder = os.path.basename(parent_folder)
+    #print("Debbuging")
+    #print(config)
+    #print(parent_folder)
+    #print(os.path.join(clairctl_home,
+    #                       "docker-compose-data",
+    #                       "clairctl-reports",
+    #                       "json",
+    #                       "analysis-"+image_name+"-latest.json"))
+    #print(os.path.join(old_root_path,
+    #                       config["examples-results-path"],
+    #                       parent_folder,
+    #                       image_name+"-vulnerabilities.json"))
+    #print("-------")
 
-    os.rename(os.path.join(clairctl_home,
+    if not os.path.isfile(os.path.join(clairctl_home,
                            "docker-compose-data",
                            "clairctl-reports",
-                           "json",
+                           "analysis-"+image_name+"-latest.json")):
+        print("WARNING, unable to find the report for the current image!")
+
+    else:
+        shutil.move(os.path.join(clairctl_home,
+                           "docker-compose-data",
+                           "clairctl-reports",
                            "analysis-"+image_name+"-latest.json"),
               os.path.join(old_root_path,
                            config["examples-results-path"],

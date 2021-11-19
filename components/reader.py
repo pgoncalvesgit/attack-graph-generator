@@ -138,17 +138,25 @@ def read_attack_vector_files(attack_vector_folder_path):
 
     attack_vector_list = []
 
+    #print(attack_vector_folder_path)
     attack_vector_filenames = os.listdir(attack_vector_folder_path)
 
     # Iterating through the attack vector files.
+    # print(attack_vector_filenames)
     for attack_vector_filename in attack_vector_filenames:
 
         # Load the attack vector.
+        print(os.path.join(attack_vector_folder_path, attack_vector_filename))
         if not attack_vector_filename.startswith("nvdcve"):
+            print("Not nvdcve {}".format(attack_vector_filename))
             continue
         with open(os.path.join(attack_vector_folder_path, attack_vector_filename)) as att_vec:
-            attack_vector_list.append(json.load(att_vec))
-
+            try:
+                attack_vector_list.append(json.load(att_vec))
+            except json.JSONDecodeError as je:
+                print("WARNING: Unable to load the json file \"{}\"".format(os.path.join(attack_vector_folder_path, attack_vector_filename)))
+                continue
+    #print("attack vector list -> {}".format(attack_vector_list))
     return attack_vector_list
 
 def read_topology(example_folder_path):
@@ -171,14 +179,17 @@ def read_vulnerabilities(vulnerabilities_folder_path, containers):
     vulnerabilities = {}
 
     for container in containers:
+        container = container.replace("/","_")
+        #print(container)
 
         vulnerabilities_path = os.path.join(vulnerabilities_folder_path,
                                             container+"-vulnerabilities.json")
+        #print(vulnerabilities_path)
         if os.path.exists(vulnerabilities_path):
             with open(vulnerabilities_path) as vul_file:
                 vulnerabilities_container = json.load(vul_file)
             vulnerabilities[container] = vulnerabilities_container
-
+    #print(vulnerabilities)
     return vulnerabilities
 
 def read_docker_compose_file(example_folder_path):
