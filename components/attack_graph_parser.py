@@ -63,51 +63,6 @@ def clean_vulnerabilities(raw_vulnerabilities, container):
     return vulnerabilities
 
 
-def clean_vulnerabilities_old(raw_vulnerabilities, container):
-    """Cleans the vulnerabilities for a given container."""
-
-    vulnerabilities = {}
-
-    # Going to the .json hierarchy to get the CVE ids.
-    print(raw_vulnerabilities.keys())
-    print(raw_vulnerabilities)
-    layers = raw_vulnerabilities["Layers"]
-    for layer in layers:
-        features = layer["Layer"]["Features"]
-        for feature in features:
-            if "Vulnerabilities" not in feature:
-                continue
-
-            vulnerabilities_structure = feature["Vulnerabilities"]
-            for vulnerability in vulnerabilities_structure:
-                vulnerability_new = {}
-
-                # Finding the description
-                if "Description" in vulnerability.keys():
-                    vulnerability_new["desc"] = vulnerability["Description"]
-                else:
-                    vulnerability_new["desc"] = "?"
-
-                # Finding the attack vector
-                vulnerability_new["attack_vec"] = "?"
-                if "Metadata" in vulnerability.keys():
-                    metadata = vulnerability["Metadata"]
-                    if "NVD" not in metadata:
-                        continue
-
-                    if "CVSSv2" not in metadata["NVD"]:
-                        continue
-
-                    if "Vectors" in metadata["NVD"]["CVSSv2"]:
-                        vec = metadata["NVD"]["CVSSv2"]["Vectors"]
-                        vulnerability_new["attack_vec"] = vec
-                vulnerabilities[vulnerability["Name"]] = vulnerability_new
-
-    print("Total " + str(len(vulnerabilities))
-          + " vulnerabilities in container "+container+".")
-
-    return vulnerabilities
-
 def get_graph(attack_paths):
     """Getting the nodes and edges for an array of attack paths."""
 
