@@ -79,16 +79,17 @@ def main(example_folder):
     duration_vulnerabilities = 0
     if config["mode"] == "online":
         time_start = time.time()
-        #vul_par.parse_vulnerabilities(example_folder)
+        # vul_par.parse_vulnerabilities(example_folder)
         duration_vulnerabilities = time.time() - time_start
         print("Time elapsed: "+str(duration_vulnerabilities)+" seconds.\n")
 
     vulnerabilities_folder_path = os.path.join(config['examples-results-path'],
                                                os.path.basename(example_folder))
     vulnerabilities = reader.read_vulnerabilities(vulnerabilities_folder_path, topology.keys())
-    #print(vulnerabilities.keys())
+    print(vulnerabilities.keys())
     #for key in vulnerabilities.keys():
     #    print(vulnerabilities[key])
+    time.sleep(10)
     if not vulnerabilities.keys():
         print("There is a mistake with the vulnerabilities. Terminating the function...")
         return
@@ -158,6 +159,6 @@ if __name__ == "__main__":
     if input_files_are_correct():
         main(sys.argv[1])
     else:
-        print("Please have a look at the --help.")
+        print("Please have a look at the help (-h).")
         exit()
 

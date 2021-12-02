@@ -54,40 +54,27 @@ def write_clarictl_config_file(clairctl_home, clairctl_config_dict):
     with open(os.path.join(clairctl_home, "clairctl.yml"), "w") as outfile:
         yaml.dump(clairctl_config_dict, outfile)
 
-def copy_vulnerability_file(clairctl_home, image_name, old_root_path, parent_folder):
+def copy_vulnerability_file(clairctl_home, image_file_name, old_root_path, parent_folder):
     """Copies the vulnerability file from clairctl to the local location."""
 
     config = reader.read_config_file(old_root_path)
     parent_folder = os.path.basename(parent_folder)
-    #print("Debbuging")
-    #print(config)
-    #print(parent_folder)
-    #print(os.path.join(clairctl_home,
-    #                       "docker-compose-data",
-    #                       "clairctl-reports",
-    #                       "json",
-    #                       "analysis-"+image_name+"-latest.json"))
-    #print(os.path.join(old_root_path,
-    #                       config["examples-results-path"],
-    #                       parent_folder,
-    #                       image_name+"-vulnerabilities.json"))
-    #print("-------")
 
     if not os.path.isfile(os.path.join(clairctl_home,
                            "docker-compose-data",
                            "clairctl-reports",
-                           "analysis-"+image_name+"-latest.json")):
+                           "analysis-"+image_file_name+"-latest.json")):
         print("WARNING, unable to find the report for the current image!")
 
     else:
         shutil.move(os.path.join(clairctl_home,
                            "docker-compose-data",
                            "clairctl-reports",
-                           "analysis-"+image_name+"-latest.json"),
+                           "analysis-"+image_file_name+"-latest.json"),
               os.path.join(old_root_path,
                            config["examples-results-path"],
                            parent_folder,
-                           image_name+"-vulnerabilities.json"))
+                           image_file_name+"-vulnerabilities.json"))
 
 def create_folder(example_folder_path):
     """Creates folder for storing the intermediate results of the examples."""

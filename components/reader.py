@@ -116,7 +116,7 @@ def check_priviledged_access(mapping_names, example_folder_path):
     priviledged_access = {}
     for service in services:
         if "privileged" in services[service] and services[service]["privileged"]:
-            priviledged_access[mapping_names[service]] = True
+            priviledged_access[mapping_names[service]['image_name']] = True
         elif "volumes" in services[service]:
             volumes = services[service]["volumes"]
             # Check if docker socket is mounted
@@ -125,11 +125,11 @@ def check_priviledged_access(mapping_names, example_folder_path):
                 if "/var/run/docker.sock:/var/run/docker.sock" in volume:
                     socket_mounted = True
             if socket_mounted:
-                priviledged_access[mapping_names[service]] = True
+                priviledged_access[mapping_names[service]['image_name']] = True
             else:
-                priviledged_access[mapping_names[service]] = False
+                priviledged_access[mapping_names[service]['image_name']] = False
         else:
-            priviledged_access[mapping_names[service]] = False
+            priviledged_access[mapping_names[service]['image_name']] = False
 
     return priviledged_access
 
@@ -179,17 +179,22 @@ def read_vulnerabilities(vulnerabilities_folder_path, containers):
     vulnerabilities = {}
 
     for container in containers:
-        container = container.replace("/","_")
+        container_file_name = container.replace("/","_")
         #print(container)
 
         vulnerabilities_path = os.path.join(vulnerabilities_folder_path,
-                                            container+"-vulnerabilities.json")
+                                            container_file_name+"-vulnerabilities.json")
         #print(vulnerabilities_path)
         if os.path.exists(vulnerabilities_path):
             with open(vulnerabilities_path) as vul_file:
-                vulnerabilities_container = json.load(vul_file)
+                try:
+                    vulnerabilities_container = json.load(vul_file)
+                except json.decoder.JSONDecodeError as jde:
+                    print(jde)
+                    print("WARNING: File {} not in the correct json format".format(vulnerabilities_path))
+                    vulnerabilities_container = {}
             vulnerabilities[container] = vulnerabilities_container
-    #print(vulnerabilities)
+    print(vulnerabilities)
     return vulnerabilities
 
 def read_docker_compose_file(example_folder_path):

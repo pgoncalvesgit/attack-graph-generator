@@ -9,11 +9,12 @@ Help()
    # Display Help
    echo "Creates the attack graphs."
    echo
-   echo "Syntax: attack-graph-generator [-o|h]"
+   echo "Syntax: attack-graph-generator -f <directory_to_analyze> [-o|h]"
    echo "options:"
    echo "-o     Override examples."
-   echo "-f <directory> Specify the directory to analyze."
+   echo "-f     <directory> Specify the directory to analyze."
    echo "-h     Print this Help."
+   echo "-g     Goal container."
    echo
 }
 
@@ -78,9 +79,9 @@ fi
 
 if [ -z "$input_directory" ]; then
     echo "Directory given does not exist"
-    echo "-f usage: \"Specify the directory with the files\""
+    echo "usage: -f <directory_to_analyze>"
+    echo "\"Specify the directory with the files\""
     echo
-    Help
     exit
 fi
 
@@ -90,13 +91,5 @@ fi
 echo "The dependencies are installed. Starting the attack graph generator."
 echo ""
 sudo python3 main.py $input_directory
-
-if  [ $1 == "--help" ]; then
-    echo "Option --help turned on"
-    echo "Command: ./attack-graph-generator.sh <example-folder-path> <goal-container>"
-    echo "<example-folder-path> is the folder that we want to analyze."
-    echo "<goal-container> is the name of the docker that the attacker wants to control."
-fi
-
 
 

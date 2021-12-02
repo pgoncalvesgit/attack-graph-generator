@@ -50,6 +50,19 @@ fi
 
 
 
+
+# Checking if GOPATH is set
+if [ -d "$GOPATH" ]; then
+     echo "GOPATH is already set."
+else
+     echo "GOPATH is not set. Setting GOPATH..."
+     export PATH=$PATH:/usr/local/go/bin
+     export GOPATH=/usr/local/go/bin
+fi
+
+
+
+
 # Checking if go is installed.
 #GOPATH="/usr/local/go"
 if [ -d "$GOPATH" ]; then
@@ -63,16 +76,6 @@ else
 fi
 sudo chmod -R 777 "/usr/local/go"
 
-
-
-# Checking if GOPATH is set
-if [ -d "$GOPATH" ]; then
-     echo "GOPATH is already set."
-else
-     echo "GOPATH is not set. Setting GOPATH..."
-     export PATH=$PATH:/usr/local/go/bin
-     export GOPATH=/usr/local/go/bin
-fi
 
 
 

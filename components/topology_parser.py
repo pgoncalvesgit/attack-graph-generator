@@ -30,7 +30,7 @@ def validation_docker_compose(example_folder_path):
         return False
 
     # Checks if the services have the "build" keyword for local building.
-    '''
+    '''TODO Not necessary for now! maybe use the online keywork later
     for service in services:
         contents_service = services[service]
         if 'build' not in contents_service.keys():
@@ -58,13 +58,16 @@ def get_mapping_service_to_image_names(example_folder_path):
 
         # Checks if the 'image' keyword is present and names the service after it.
         if 'image' in content_service.keys():
-            mapping[service.replace("/","_")] = content_service['image'].replace("/","_")
+            mapping[service] = {'directory_name' : content_service['image'].replace("/","_"),
+                                'image_name': content_service['image']}
 
-        # If not, it appends the folder name as a prefix to the service name.
+        # If  not, it appends the folder name as a prefix to the service name.
         else:
             # Specific to docker: '-' and '_' are removed.
+            # Also '/' becomes '_' due to folder pathing problems
             parent_name = os.path.basename(example_folder_path).replace("-", "").replace("_", "")
-            mapping[service.replace("/","_")] = os.path.basename(parent_name)+"_"+service.repalce("/","_")
+            mapping[service] = {'directory_name' : os.path.basename(parent_name)+"_"+service.replace("/","_"),
+                                'image_name':  os.path.basename(parent_name)+"_"+service}
 
     return mapping
 
@@ -75,12 +78,15 @@ def create_topology_graph(list_services,
 
     nodes = []
     edges = {}
+    # Goes through all services and adds them to the nodes list
     for service in list_services.keys():
         nodes.append(service)
+        # Goes through all services connected to the current service and checks if they are neighbors
         for neighbour in list_services[service]:
             if neighbour+"|"+service not in edges.keys():
                 edges[service+"|"+neighbour] = [service, neighbour]
 
+    # Generates the graph
     dot = Graph(comment="Topology Graph")
     for node in nodes:
         dot.node(node)
@@ -95,6 +101,7 @@ def parse_topology(example_folder_path,
                    example_results_path=""):
     """ Function for parsing the topology of the docker system.
 
+    TODO Present these assumptions earlier
     Assumptions:
     1) We assume that the docker-compose file contains networks
     and the dockers are connected through these networks
@@ -122,10 +129,10 @@ def parse_topology(example_folder_path,
         if "networks" in services[first_service_name].keys():
             first_service_networks = services[first_service_name]["networks"]
         else:
-
+            # TODO No network is specified so all services appear
             # If it does not, it means that it is exposed to every other service.
             first_service_networks = "exposed"
-        list_services[mapping_names[first_service_name.replace("/","_")]] = []
+        list_services[mapping_names[first_service_name]['image_name']] = []
 
         # Iteration through the second service.
         for second_service_name in services:
@@ -144,18 +151,18 @@ def parse_topology(example_folder_path,
                     if first_service_network in second_service_networks:
 
                         # If they do, then they are added.
-                        list_services[mapping_names[first_service_name.replace("/","_")]]\
-                        .append(mapping_names[second_service_name.replace("/","_")])
+                        list_services[mapping_names[first_service_name]['image_name']]\
+                        .append(mapping_names[second_service_name]['image_name'])
 
         # Check if the ports are mapped to the host machine
         # i.e. the docker is exposed to outside
         if "ports" in services[first_service_name].keys():
-            list_services["outside"].append(mapping_names[first_service_name])
-            list_services[mapping_names[first_service_name]].append("outside")
+            list_services["outside"].append(mapping_names[first_service_name]['image_name'])
+            list_services[mapping_names[first_service_name]['image_name']].append("outside")
 
         # Adding the docker host as a node in the graph connected to all of the services
-        list_services[mapping_names[first_service_name]].append("docker host")
-        list_services["docker host"].append(mapping_names[first_service_name])
+        list_services[mapping_names[first_service_name]['image_name']].append("docker host")
+        list_services["docker host"].append(mapping_names[first_service_name]['image_name'])
 
     # Writing the dictonary into a json file.
     writer.write_topology_file(list_services,

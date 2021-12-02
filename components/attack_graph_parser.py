@@ -15,7 +15,12 @@ def clean_vulnerabilities(raw_vulnerabilities, container):
     vulnerabilities = {}
 
     # Going to the .json hierarchy to get the CVE ids.
+    #try:
     vulnerabilities_structure = raw_vulnerabilities["vulnerabilities"]
+    #except KeyError as ke:
+    #    print(ke)
+    #    print("WARNING: Vulnerabilities for container {} either don't exist or are malformed!".format(container))
+    #    return vulnerabilities
     pre_metadata_vulnerabilities_structure = raw_vulnerabilities["enrichments"]
     metadata_vulnerabilities_structure = list()
     for metadata in pre_metadata_vulnerabilities_structure.values():
@@ -259,7 +264,6 @@ def breadth_first_search(topology,
 
         # Iterate through all of the neighbours
         for neighbour in neighbours:
-            #neighbour = neighbour.replace("/","_")
             # Checks if the attacker has access to the docker host.
             if current_node == "docker host" and passed_nodes.get(neighbour+"|4") != None:
 
@@ -575,7 +579,7 @@ def generate_attack_graph(attack_vector_path,
     # Getting the potentially exploitable vulnerabilities for each container.
     exploitable_vuls = {}
     for container in topology.keys():
-        container = container.replace("/","_")
+        container = container
         if container != "outside" and container != "docker host":
 
             # Reading the vulnerability
