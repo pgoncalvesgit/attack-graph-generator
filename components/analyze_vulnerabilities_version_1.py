@@ -6,6 +6,10 @@ import json
 
 vulnerabilities_path = "/folder/attack-graph-generator/examples-results/TeaStore"
 
+keys_to_identify = ["attackComplexity", "privilegesRequired", "userInteraction", "baseScore", "availabilityImpact", "attackVector"]
+sort_default_list = ["NONE", "LOW", "MEDIUM", "HIGH"]
+
+
 def printj(dictionary):
 	print(json.dumps(dictionary, indent = 4));
 
@@ -24,6 +28,33 @@ def possible_values_for_various_keys(keys_to_address, vulnerabilities_descriptio
 	possible_values_dict = dict()
 	[possible_values_dict.update({key_to_address : possible_values_for_key(key_to_address, vulnerabilities_description_list)}) for key_to_address in keys_to_address]
 	return possible_values_dict
+
+# Defined twice, im tired...
+def sort_possible_values_list(keys_to_use, possible_values_dict, reverse=False):
+        for key_to_use in keys_to_use:
+                possible_values_list = possible_values_dict[key_to_use]
+                if key_to_use == 'attackVector' or key_to_use == 'userInteraction':
+                        continue
+                elif key_to_use == 'baseScore':
+                        possible_values_list.sort(reverse = not reverse)
+                else:
+                        possible_values_list.sort(key=lambda adjective: sort_default_list.index(adjective), reverse = reverse)
+
+
+
+file_keys = read_vulnerability_file(get_vulnerability_file_names(vulnerabilities_path)[0])
+
+vulnerabilities_keys = file_keys["vulnerabilities"].keys()
+
+enchrichements_keys = list(file_keys["enrichments"].values())[0][0].keys()
+
+vulnerabilities_described_keys = [vulnerability for vulnerability in enchrichements_keys if vulnerability in set(vulnerabilities_keys)]
+description_dict = list(file_keys["enrichments"].values())[0][0]
+description_list = [description_dict[vulnerability_key] for vulnerability_key in enchrichements_keys]
+possible_values_dict = possible_values_for_various_keys(keys_to_identify, description_list)
+sort_possible_values_list(keys_to_identify, possible_values_dict)
+
+
 
 # Completly useless with filter_positive_list
 # Only the negative makes sense
@@ -91,11 +122,48 @@ def get_values_multiplied(keys_to_use, possible_values_dict):
 	return values_dict
 
 
-def sort_vulnerabilities(vul_dict, keys_to_use, possible_values_dict, reverse=False):
+def sort_vulnerabilities_1(vul_dict, keys_to_use, possible_values_dict, reverse=False):
 	vul_list = list(vul_dict.keys())
 	values_dict = get_values_multiplied(keys_to_use, possible_values_dict)
 	vul_list.sort(key=lambda vul_key: sort_vulnerability_key(vul_dict[vul_key][0], keys_to_use, possible_values_dict, values_dict), reverse = False)
 	return vul_list
+
+
+def get_vulnerabilities_ids(vul_list_CVE, vul_dict):
+	vul_CVE_id_dict = dict()
+	vul_id_CVE_dict = dict()
+
+	for vul_id, vul_desc in vul_dict.items():
+		if vul_desc['name'] in vul_list_CVE:
+			vul_CVE_id_dict[vul_desc['name']] = vul_id
+			vul_id_CVE_dict[vul_id] = vul_desc['name']
+	return (vul_CVE_id_dict, vul_id_CVE_dict)
+
+# TODO - This obviously needs refactoring
+# It is late and im tired
+def sort_vulnerabilities(vul_list_CVE, vul_full_dict, reverse = False):
+	#print(vul_full_dict.keys())
+	vul_simple_description_dict = vul_full_dict["vulnerabilities"]
+	if len(vul_simple_description_dict.keys()) == 0:
+		return []
+
+	enrichments_dict_temp = vul_full_dict["enrichments"].keys()
+	if len(enrichments_dict_temp) == 0:
+		return []
+
+	vul_full_description_dict = list(vul_full_dict["enrichments"].values())[0][0]
+	(vul_CVE_id_dict, vul_id_CVE_dict) = get_vulnerabilities_ids(vul_list_CVE, vul_simple_description_dict)
+
+	ids_CVE_list = list(vul_id_CVE_dict.keys())
+	sorted_vul_list = sort_vulnerabilities_1(vul_full_description_dict, keys_to_identify, possible_values_dict, reverse = reverse)
+
+	new_sorted_CVE_list = []
+	for element in sorted_vul_list:
+		if element in ids_CVE_list:
+			new_sorted_CVE_list.insert(0, vul_id_CVE_dict[element])
+
+	return new_sorted_CVE_list
+
 
 # CAREFULL - I GOT CONFUSED WITH FILTERS
 # NEXT SECTION IS CONFUSION OF THE HIGHEST ORDER
@@ -143,7 +211,19 @@ def filter_vulnerabilities_not_detailed(vul_simple_description_dict, vul_full_de
 	filter_dictionary_by_keys_negative(vul_full_description_dict, enchrichements_keys, vulnerabilities_described_keys)
 
 def filter_full_vulnerabilities(vul_full_dict, filter_tuples):
+	#print(vul_full_dict)
+	if not vul_full_dict:
+		return
 	vul_simple_description_dict = vul_full_dict["vulnerabilities"]
+	if len(vul_simple_description_dict.keys()) == 0:
+		vul_full_dict["enrichments"] = dict()
+		return
+
+	enrichments_dict_temp = vul_full_dict["enrichments"].keys()
+	if len(enrichments_dict_temp) == 0:
+		vul_full_dict["vulnerabilities"] = dict()
+		return
+
 	vul_full_description_dict = list(vul_full_dict["enrichments"].values())[0][0]
 
 	vulnerabilities_keys = vul_simple_description_dict.keys()

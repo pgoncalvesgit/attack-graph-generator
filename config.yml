@@ -1,3 +1,6 @@
+#Consider that admin access is possible
+consider-admin-access: True
+
 # The location of the folder with the NVD attack rule files.
 attack-vector-folder-path: attack_vector_files
 
@@ -14,10 +17,12 @@ generate_graphs: True # Options {True, False}
 # This property states if single or multiple vulnerabilties constitute 
 # an edge between two same nodes
 labels_edges: multiple # Options {"single", "multiple"}
+labels_edges_number: -1 # Options 1 <= number <= whatever  ; -1 for all
 
 # This property only shows one vulnerability per edge in the attack graph
 # We use this in order to have more readable attack graphs.
-show_one_vul_per_edge: True # Options {True, False}
+show_n_vuls_per_edge: True # Options {True, False}
+n_vuls_per_edge: 5 # Options 1 <= number <= whatever
 
 # The rules required to produce pre- and postconditions. They follow a specific pattern.
 preconditions-rules:

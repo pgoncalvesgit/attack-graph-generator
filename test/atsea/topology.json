@@ -1,3 +1,1 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:14ea4fa3478fc95d6f448489320b748b5d481fcde1dc8a6e8e392b7c597ce29d
-size 316
+{"atsea_payment_gateway": ["docker host"], "atsea_reverse_proxy": ["docker host"], "outside": ["atsea_app", "atsea_db"], "atsea_app": ["atsea_db", "outside", "docker host"], "atsea_db": ["atsea_app", "outside", "docker host"], "docker host": ["atsea_reverse_proxy", "atsea_app", "atsea_payment_gateway", "atsea_db"]}

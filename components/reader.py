@@ -5,6 +5,7 @@ import sys
 import os
 import json
 import yaml
+from components import analyze_vulnerabilities_version_1 as aux_vul
 
 def validate_command_line_input(arguments):
     """This function validates the command line user input."""
@@ -45,8 +46,10 @@ def validate_config_file():
                      "examples-results-path",
                      "mode",
                      "labels_edges",
+                     "labels_edges_number",
                      "generate_graphs",
-                     "show_one_vul_per_edge"]
+                     "show_n_vuls_per_edge",
+                     "n_vuls_per_edge"]
 
     for main_keyword in main_keywords:
         if main_keyword not in config_file.keys():
@@ -87,9 +90,9 @@ def validate_config_file():
                   " is invalid for keyword generate_graphs")
             sys.exit(0)
 
-    # Check if the show_one_vul_per_edge keyword has the right values
+    # Check if the show_n_vuls_per_edge keyword has the right values
     if is_valid:
-        config_mode = config_file["show_one_vul_per_edge"]
+        config_mode = config_file["show_n_vuls_per_edge"]
         if config_mode != True and config_mode != False:
             is_valid = False
             print("Value: " + \
@@ -106,6 +109,7 @@ def validate_config_file():
                   config_mode + \
                   " is invalid for keyword labels_edges")
             sys.exit(0)
+    #TODO complete with n_vuls_per_edge and labels_edges_number
 
     return is_valid
 
@@ -136,23 +140,27 @@ def check_priviledged_access(mapping_names, example_folder_path):
 def read_attack_vector_files(attack_vector_folder_path):
     """It reads the attack vector files."""
 
-    attack_vector_list = []
 
-    #print(attack_vector_folder_path)
+    print("WARNING: read_attack_vector_files REMOVED IN THE MEANTIME!!")
+    attack_vector_list = []
+    return attack_vector_list
+
+    print(attack_vector_folder_path)
     attack_vector_filenames = os.listdir(attack_vector_folder_path)
 
     # Iterating through the attack vector files.
-    # print(attack_vector_filenames)
+    print(attack_vector_filenames)
     for attack_vector_filename in attack_vector_filenames:
 
         # Load the attack vector.
-        print(os.path.join(attack_vector_folder_path, attack_vector_filename))
+        # print(os.path.join(attack_vector_folder_path, attack_vector_filename))
         if not attack_vector_filename.startswith("nvdcve"):
             print("Not nvdcve {}".format(attack_vector_filename))
             continue
         with open(os.path.join(attack_vector_folder_path, attack_vector_filename)) as att_vec:
             try:
                 attack_vector_list.append(json.load(att_vec))
+                #print(attack_vector_list[-1])
             except json.JSONDecodeError as je:
                 print("WARNING: Unable to load the json file \"{}\"".format(os.path.join(attack_vector_folder_path, attack_vector_filename)))
                 continue
@@ -184,7 +192,7 @@ def read_vulnerabilities(vulnerabilities_folder_path, containers):
 
         vulnerabilities_path = os.path.join(vulnerabilities_folder_path,
                                             container_file_name+"-vulnerabilities.json")
-        #print(vulnerabilities_path)
+        print(vulnerabilities_path)
         if os.path.exists(vulnerabilities_path):
             with open(vulnerabilities_path) as vul_file:
                 try:
@@ -193,8 +201,11 @@ def read_vulnerabilities(vulnerabilities_folder_path, containers):
                     print(jde)
                     print("WARNING: File {} not in the correct json format".format(vulnerabilities_path))
                     vulnerabilities_container = {}
+
+            aux_vul.filter_full_vulnerabilities(vulnerabilities_container, [("attackVector","NETWORK")])
+            #aux_vul.sort_vulnerabilities(vulnerabilities_container)
+
             vulnerabilities[container] = vulnerabilities_container
-    print(vulnerabilities)
     return vulnerabilities
 
 def read_docker_compose_file(example_folder_path):

@@ -1,3 +1,1 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:278b19714885b002c8bc218575726fa9fbb4311da959e25678d27aa511f4f073
-size 217
+{"outside": ["1example_phpmailer"], "docker host": ["1example_phpmailer", "1example_samba"], "1example_phpmailer": ["1example_samba", "outside", "docker host"], "1example_samba": ["1example_phpmailer", "docker host"]}

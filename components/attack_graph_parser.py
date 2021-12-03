@@ -15,12 +15,11 @@ def clean_vulnerabilities(raw_vulnerabilities, container):
     vulnerabilities = {}
 
     # Going to the .json hierarchy to get the CVE ids.
-    #try:
+    if not raw_vulnerabilities or not raw_vulnerabilities["vulnerabilities"]:
+        #print(container)
+        return vulnerabilities
     vulnerabilities_structure = raw_vulnerabilities["vulnerabilities"]
-    #except KeyError as ke:
-    #    print(ke)
-    #    print("WARNING: Vulnerabilities for container {} either don't exist or are malformed!".format(container))
-    #    return vulnerabilities
+
     pre_metadata_vulnerabilities_structure = raw_vulnerabilities["enrichments"]
     metadata_vulnerabilities_structure = list()
     for metadata in pre_metadata_vulnerabilities_structure.values():
@@ -89,6 +88,8 @@ def get_graph(attack_paths):
 
 def get_attack_vector(attack_vector_files):
     """Merging the attack vector files into a dictionary."""
+    #print("HERE!")
+    #print(attack_vector_files)
 
     # Initializing the attack vector dictionary.
     attack_vector_dict = {}
@@ -184,7 +185,8 @@ def add_edge(nodes,
 
 def breadth_first_search(topology,
                          container_exploitability,
-                         priviledged_access):
+                         priviledged_access,
+                         consider_admin_access):
     """Breadth first search approach for generation of nodes and edges
     without generating attack paths."""
 
@@ -210,6 +212,8 @@ def breadth_first_search(topology,
     while not queue.empty():
 
         parts_current = queue.get().split("|")
+        print(parts_current)
+        print("HEEERE")
         current_node = parts_current[0]
         priv_current = int(parts_current[1])
 
@@ -221,7 +225,6 @@ def breadth_first_search(topology,
         for neighbour in neighbours:
             # Checks if the attacker has access to the docker host.
             if current_node == "docker host" and passed_nodes.get(neighbour+"|4") != None:
-
                 # Add the edge
                 nodes, edges, passed_edges = add_edge(nodes,
                                                       edges,
@@ -233,8 +236,7 @@ def breadth_first_search(topology,
                                                       passed_edges)
 
             # Checks if the container has privileged access.
-            elif neighbour == "docker host" and priviledged_access[current_node]:
-
+            elif neighbour == "docker host" and priviledged_access[current_node] and consider_admin_access:
                 # Add the edge
                 nodes, edges, passed_edges = add_edge(nodes,
                                                       edges,
@@ -250,12 +252,16 @@ def breadth_first_search(topology,
 
             elif neighbour != "outside" and neighbour != "docker host":
                 #try:
-                print(container_exploitability.keys())
+                #print(container_exploitability.keys())
+                # Gets pre and post conditions in a dictionary by vulnerability
                 precond = container_exploitability[neighbour]["precond"]
                 postcond = container_exploitability[neighbour]["postcond"]
 
                 for vul in precond.keys():
-
+                    # Verifies that it has the minimum permissions for the vulnerability and ((
+                    # The neighbour isn't the same as the current_node while also having a post condition of the vulnerability
+                    # that has more permissions than normal user) or (The neighbor is the current node but there is a vulnerability
+                    # that allows it to get better permissions (permisison escalation)))
                     if priv_current >= precond[vul] and \
                        ((neighbour != current_node and postcond[vul] != 0) or \
                         (neighbour == current_node and priv_current < postcond[vul])):
@@ -270,6 +276,7 @@ def breadth_first_search(topology,
                                                           vul,
                                                           passed_edges)
 
+                        # NOT TRUE TODO:
                         # If the neighbour was not passed or it has a lower privilege...
                         passed_nodes_key = neighbour + "|" + str(postcond[vul])
                         if passed_nodes.get(passed_nodes_key) == None:
@@ -311,7 +318,7 @@ def merge_attack_vector_vuls(attack_vector_dict, vulnerabilities):
     for vulnerability in vulnerabilities:
         vulnerability_new = {}
         if vulnerability in attack_vector_dict:
-
+            #print(attack_vector_dict[vulnerability])
             vulnerability_new["desc"] = attack_vector_dict[vulnerability]["desc"]
 
             if attack_vector_dict[vulnerability]["attack_vec"] != "?":
@@ -321,7 +328,14 @@ def merge_attack_vector_vuls(attack_vector_dict, vulnerabilities):
             vulnerability_new["cpe"] = attack_vector_dict[vulnerability]["cpe"]
 
         else:
-
+            if isinstance(vulnerabilities[vulnerability], str):
+                # print(vulnerabilities[vulnerability])
+                print(vulnerabilities)
+                print(vulnerability)
+                continue
+            if "desc" not in vulnerabilities[vulnerability].keys():
+                print(vulnerabilities.keys())
+                print(vulnerability)
             vulnerability_new["desc"] = vulnerabilities[vulnerability]["desc"]
             if vulnerabilities[vulnerability]["attack_vec"] != "?":
 
@@ -495,6 +509,7 @@ def get_exploitable_vuls_container(vulnerabilities,
 
     # Remove junk and just takethe most important part from each vulnerability
     cleaned_vulnerabilities = clean_vulnerabilities(vulnerabilities, container_name)
+    #print(cleaned_vulnerabilities)
 
     # Merging the cleaned vulnerabilities
     merged_vul = merge_attack_vector_vuls(attack_vector_dict, cleaned_vulnerabilities)
@@ -510,12 +525,13 @@ def generate_attack_graph(attack_vector_path,
                           post_rules,
                           topology,
                           vulnerabilities,
-                          example_folder):
+                          example_folder,
+                          consider_admin_access):
     """Main pipeline for the attack graph generation algorithm."""
 
     print("Start with attack graph generation...")
-    #print("vulnerabilities: {}".format(vulnerabilities))
-    print(vulnerabilities.keys())
+    # print("vulnerabilities: {}".format(vulnerabilities))
+    # print(vulnerabilities.keys())
     # Read the attack vector files.
     attack_vector_files = reader.read_attack_vector_files(attack_vector_path)
 
@@ -533,6 +549,8 @@ def generate_attack_graph(attack_vector_path,
 
     # Getting the potentially exploitable vulnerabilities for each container.
     exploitable_vuls = {}
+    #print(vulnerabilities.keys())
+    #print(vulnerabilities["weaveworksdemos/front-end:0.3.12"])
     for container in topology.keys():
         container = container
         if container != "outside" and container != "docker host":
@@ -544,6 +562,9 @@ def generate_attack_graph(attack_vector_path,
                                                                          attack_vector_dict,
                                                                          pre_rules,
                                                                          post_rules)
+            #print(container)
+            #print(exploitable_vuls[container])
+            #time.sleep(5)
             #except KeyError as ke:
             #    print(ke)
             #    print("{} not found inside dictionary of vulnerabilities".format(container))
@@ -559,7 +580,8 @@ def generate_attack_graph(attack_vector_path,
     print("Breadth-first search started.")
     nodes, edges, duration_bdf = breadth_first_search(topology,
                                                       exploitable_vuls,
-                                                      privileged_access)
+                                                      privileged_access,
+                                                      consider_admin_access)
 
     print("Breadth-first search finished. Time elapsed: "+str(duration_bdf)+" seconds.\n")
 

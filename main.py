@@ -12,11 +12,17 @@ from components import topology_parser as top_par
 from components import vulnerability_parser as vul_par
 from components import attack_graph_parser as att_gr_par
 
+from components import analyze_vulnerabilities_version_1 as aux_vul
+
+import json
+
 def visualize_attack_graph(labels_edges,
+                           labels_edges_number,
                            example_folder_path,
                            nodes,
                            edges):
-    print("HERE")
+    #print("HERE")
+    print(json.dumps(edges, indent = 4))
     """This function visualizes the attack graph with given counter examples."""
 
     dot = Digraph(comment="Attack Graph")
@@ -37,7 +43,11 @@ def visualize_attack_graph(labels_edges,
 
         elif labels_edges == "multiple":
             desc = ""
+            number_of_edges = 0
             for edge_vul in edge_vuls:
+                if number_of_edges == labels_edges_number:
+                    break
+                number_of_edges += 1
                 if desc == "":
                     desc += edge_vul
                 else:
@@ -86,10 +96,9 @@ def main(example_folder):
     vulnerabilities_folder_path = os.path.join(config['examples-results-path'],
                                                os.path.basename(example_folder))
     vulnerabilities = reader.read_vulnerabilities(vulnerabilities_folder_path, topology.keys())
-    print(vulnerabilities.keys())
-    #for key in vulnerabilities.keys():
-    #    print(vulnerabilities[key])
-    time.sleep(10)
+
+    # print(vulnerabilities["descartesresearch/teastore-webui"].keys())
+
     if not vulnerabilities.keys():
         print("There is a mistake with the vulnerabilities. Terminating the function...")
         return
@@ -102,7 +111,14 @@ def main(example_folder):
                                                        config["postconditions-rules"],
                                                        topology,
                                                        vulnerabilities,
-                                                       example_folder)
+                                                       example_folder,
+                                                       config["consider-admin-access"])
+    #print(att_graph_tuple[1])
+    for edge in att_graph_tuple[1].keys():
+        att_graph_tuple[1][edge] = aux_vul.sort_vulnerabilities(att_graph_tuple[1][edge], vulnerabilities[edge.split("|")[1].split("(")[0]])
+    #temp = "descartesresearch/teastore-image(ADMIN)|descartesresearch/teastore-recommender(ADMIN)"
+    #att_graph_tuple[1][temp] = aux_vul.sort_vulnerabilities(att_graph_tuple[1][temp], vulnerabilities[temp.split("|")[1].split("(")[0]])
+    #time.sleep(30)
 
     print("Time elapsed: "+str(att_graph_tuple[2]+att_graph_tuple[3])+" seconds.\n")
 
@@ -114,14 +130,17 @@ def main(example_folder):
     #print(att_graph_tuple[0])
     #print(len(att_graph_tuple[1].keys()))
 
-    if config["show_one_vul_per_edge"]:
+    if config["show_n_vuls_per_edge"]:
+        counter = 0;
+        n_vuls_per_edge = config["n_vuls_per_edge"]
         for element in att_graph_tuple[1].keys():
-            att_graph_tuple[1][element] = [att_graph_tuple[1][element][0]]
+            att_graph_tuple[1][element] = att_graph_tuple[1][element][0:n_vuls_per_edge]
 
     # Visualizing the attack graph.
     if config['generate_graphs']:
         time_start = time.time()
         visualize_attack_graph(config["labels_edges"],
+                               config["labels_edges_number"],
                                example_folder,
                                nodes=att_graph_tuple[0],
                                edges=att_graph_tuple[1])
